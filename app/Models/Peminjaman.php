@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Peminjaman extends Model
 {
+    protected $table = 'peminjamans';
+
     protected $fillable = [
         'user_id',
         'buku_id',
@@ -15,21 +17,13 @@ class Peminjaman extends Model
         'status',
     ];
 
-    protected function casts(): array
+    public function buku(): BelongsTo
     {
-        return [
-            'tanggal_pinjam' => 'date',
-            'tanggal_kembali' => 'date',
-        ];
+        return $this->belongsTo(Buku::class);
     }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function buku(): BelongsTo
-    {
-        return $this->belongsTo(Buku::class);
     }
 }

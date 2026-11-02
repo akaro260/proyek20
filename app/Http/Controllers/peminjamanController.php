@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Buku;
 use App\Models\Peminjaman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-class peminjamanContrller extends Controller
+class PeminjamanController extends Controller
 {
     public function index(Request $request)
     {
@@ -41,10 +40,7 @@ class peminjamanContrller extends Controller
                 ]);
             }
 
-            $masihDipinjam = Peminjaman::where(
-                'user_id',
-                $request->user()->id
-            )
+            $masihDipinjam = Peminjaman::where('user_id', $request->user()->id)
                 ->where('buku_id', $buku->id)
                 ->where('status', 'dipinjam')
                 ->exists();
@@ -93,7 +89,7 @@ class peminjamanContrller extends Controller
             'Kamu tidak memiliki akses ke peminjaman ini.'
         );
 
-        DB::transaction(function () use ($peminjaman) {
+        $peminjaman = DB::transaction(function () use ($peminjaman) {
             $peminjaman = Peminjaman::whereKey($peminjaman->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -109,13 +105,14 @@ class peminjamanContrller extends Controller
                 'tanggal_kembali' => now()->toDateString(),
             ]);
 
-            Buku::whereKey($peminjaman->buku_id)
-                ->increment('stok');
+            Buku::whereKey($peminjaman->buku_id)->increment('stok');
+
+            return $peminjaman;
         });
 
         return response()->json([
             'message' => 'Buku berhasil dikembalikan.',
-            'data' => $peminjaman->fresh()->load('buku'),
+            'data' => $peminjaman->load('buku'),
         ]);
     }
 }
